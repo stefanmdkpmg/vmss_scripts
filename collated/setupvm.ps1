@@ -216,6 +216,93 @@ function Invoke-DownloadWithRetry {
     return $Path
 }
 
+function Test-FileSignature {
+    <#
+    .SYNOPSIS
+        Tests the file signature of a given file.
+
+    .DESCRIPTION
+        The Test-FileSignature function checks the signature of a file against the expected thumbprints. 
+        It uses the Get-AuthenticodeSignature cmdlet to retrieve the signature information of the file.
+        If the signature status is not valid or the thumbprint does not match the expected thumbprints, an exception is thrown.
+
+    .PARAMETER Path
+        Specifies the path of the file to test.
+
+    .PARAMETER ExpectedThumbprint
+        Specifies the expected thumbprints to match against the file's signature.
+
+    .EXAMPLE
+        Test-FileSignature -Path "C:\Path\To\File.exe" -ExpectedThumbprint "A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S9T0"
+
+        This example tests the signature of the file "C:\Path\To\File.exe" against the expected thumbprint "A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S9T0".
+
+    #>
+    
+    param(
+        [Parameter(Mandatory = $true, Position = 0)]
+        [string] $Path,
+        [Parameter(Mandatory = $true)]
+        [string[]] $ExpectedThumbprint
+    )
+
+    $signature = Get-AuthenticodeSignature $Path
+
+    if ($signature.Status -ne "Valid") {
+        throw "Signature status is not valid. Status: $($signature.Status)"
+    }
+    
+    foreach ($thumbprint in $ExpectedThumbprint) {
+        if ($signature.SignerCertificate.Thumbprint.Contains($thumbprint)) {
+            Write-Output "Signature for $Path is valid"
+            $signatureMatched = $true
+            return
+        }
+    }
+
+    if ($signatureMatched) {
+        Write-Output "Signature for $Path is valid"
+    } else {
+        throw "Signature thumbprint do not match expected."
+    }
+}
+
+function Update-Environment {
+    <#
+    .SYNOPSIS
+        Updates the environment variables by reading values from the registry.
+
+    .DESCRIPTION
+        This function updates current environment by reading values from the registry.
+        It is useful when you need to update the environment variables without restarting the current session.
+
+    .NOTES
+        The function requires administrative privileges to modify the system registry.
+    #>
+
+    $locations = @(
+        'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
+        'HKCU:\Environment'
+    )
+
+    # Update PATH variable
+    $pathItems = $locations | ForEach-Object { 
+        (Get-Item $_).GetValue('PATH').Split(';') 
+    } | Select-Object -Unique
+    $env:PATH = $pathItems -join ';'
+
+    # Update other variables
+    $locations | ForEach-Object {
+        $key = Get-Item $_
+        foreach ($name in $key.GetValueNames()) {
+            $value = $key.GetValue($name)
+            if (-not ($name -ieq 'PATH')) {
+                Set-Item -Path Env:$name -Value $value
+            } 
+        }
+    }
+}
+
 
 ################################################################################
 ##  File:  Configure-Powershell.ps1
