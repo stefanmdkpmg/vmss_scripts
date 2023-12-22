@@ -328,8 +328,7 @@ function getOSVersionLabel
 }
 
 
-sudo su
-apt update
+sudo apt update
 
 ################################################################################
 ##  File:  install-python.sh
@@ -340,7 +339,7 @@ set -e
 # Source the helpers for use with the script
 
 # Install Python, Python 3, pip, pip3
-apt-get install -y --no-install-recommends python3 python3-dev python3-pip python3-venv
+sudo apt install -y --no-install-recommends python3 python3-dev python3-pip python3-venv
 
 # Install pipx
 # Set pipx custom directory
@@ -370,8 +369,8 @@ prependEtcEnvironmentPath '$HOME/.local/bin'
 # Install Azure CLI (instructions taken from https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 curl -fsSL https://aka.ms/InstallAzureCLIDeb | sudo bash
 echo "azure-cli https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt" >> $HELPER_SCRIPTS/apt-sources.txt
-rm -f /etc/apt/sources.list.d/azure-cli.list
-rm -f /etc/apt/sources.list.d/azure-cli.list.save
+sudo rm -f /etc/apt/sources.list.d/azure-cli.list
+sudo rm -f /etc/apt/sources.list.d/azure-cli.list.save
 
 ################################################################################
 ##  File:  install-azure-devops-cli.sh
