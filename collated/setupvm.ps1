@@ -305,6 +305,205 @@ function Update-Environment {
 
 
 ################################################################################
+##  File:  Configure-WindowsDefender.ps1
+##  Desc:  Disables Windows Defender
+################################################################################
+
+Write-Host "Disable Windows Defender..."
+$avPreference = @(
+    @{DisableArchiveScanning = $true}
+    @{DisableAutoExclusions = $true}
+    @{DisableBehaviorMonitoring = $true}
+    @{DisableBlockAtFirstSeen = $true}
+    @{DisableCatchupFullScan = $true}
+    @{DisableCatchupQuickScan = $true}
+    @{DisableIntrusionPreventionSystem = $true}
+    @{DisableIOAVProtection = $true}
+    @{DisablePrivacyMode = $true}
+    @{DisableScanningNetworkFiles = $true}
+    @{DisableScriptScanning = $true}
+    @{MAPSReporting = 0}
+    @{PUAProtection = 0}
+    @{SignatureDisableUpdateOnStartupWithoutEngine = $true}
+    @{SubmitSamplesConsent = 2}
+    @{ScanAvgCPULoadFactor = 5; ExclusionPath = @("D:\", "C:\")}
+    @{DisableRealtimeMonitoring = $true}
+    @{ScanScheduleDay = 8}
+)
+
+$avPreference += @(
+    @{EnableControlledFolderAccess = "Disable"}
+    @{EnableNetworkProtection = "Disabled"}
+)
+
+$avPreference | Foreach-Object {
+    $avParams = $_
+    Set-MpPreference @avParams
+}
+
+# https://github.com/actions/runner-images/issues/4277
+# https://docs.microsoft.com/en-us/microsoft-365/security/defender-endpoint/microsoft-defender-antivirus-compatibility?view=o365-worldwide
+$atpRegPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Advanced Threat Protection'
+if (Test-Path $atpRegPath) {
+    Write-Host "Set Microsoft Defender Antivirus to passive mode"
+    Set-ItemProperty -Path $atpRegPath -Name 'ForceDefenderPassiveMode' -Value '1' -Type 'DWORD'
+}
+
+################################################################################
+##  File:  Configure-Powershell.ps1
+##  Desc:  Manage PowerShell configuration
+################################################################################
+
+#region System
+Write-Host "Setup PowerShellGet"
+Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+
+# Specifies the installation policy
+Set-PSRepository -InstallationPolicy Trusted -Name PSGallery
+
+Write-Host 'Warmup PSModuleAnalysisCachePath (speedup first powershell invocation by 20s)'
+$PSModuleAnalysisCachePath = 'C:\PSModuleAnalysisCachePath\ModuleAnalysisCache'
+
+[Environment]::SetEnvironmentVariable('PSModuleAnalysisCachePath', $PSModuleAnalysisCachePath, "Machine")
+# make variable to be available in the current session
+${env:PSModuleAnalysisCachePath} = $PSModuleAnalysisCachePath
+
+New-Item -Path $PSModuleAnalysisCachePath -ItemType 'File' -Force | Out-Null
+#endregion
+
+#region User (current user, image generation only)
+if (-not (Test-Path $profile)) {
+    New-Item $profile -ItemType File -Force
+}
+  
+@" 
+  if ( -not(Get-Module -ListAvailable -Name PowerHTML)) {
+      Install-Module PowerHTML -Scope CurrentUser 
+  } 
+  
+  if ( -not(Get-Module -Name PowerHTML)) {
+      Import-Module PowerHTML
+  } 
+"@ | Add-Content -Path $profile -Force
+
+#endregion
+
+# Create shells folder
+$shellPath = "C:\shells"
+New-Item -Path $shellPath -ItemType Directory | Out-Null
+
+# add a wrapper for C:\msys64\usr\bin\bash.exe
+@'
+@echo off
+setlocal
+IF NOT DEFINED MSYS2_PATH_TYPE set MSYS2_PATH_TYPE=strict
+IF NOT DEFINED MSYSTEM set MSYSTEM=mingw64
+set CHERE_INVOKING=1
+C:\msys64\usr\bin\bash.exe -leo pipefail %*
+'@ | Out-File -FilePath "$shellPath\msys2bash.cmd" -Encoding ascii
+
+# gitbash <--> C:\Program Files\Git\bin\bash.exe
+New-Item -ItemType SymbolicLink -Path "$shellPath\gitbash.exe" -Target "$env:ProgramFiles\Git\bin\bash.exe" | Out-Null
+
+# wslbash <--> C:\Windows\System32\bash.exe
+New-Item -ItemType SymbolicLink -Path "$shellPath\wslbash.exe" -Target "$env:SystemRoot\System32\bash.exe" | Out-Null
+
+
+################################################################################
+##  File:  Install-PowershellModules.ps1
+##  Desc:  Install common PowerShell modules
+################################################################################
+
+# Set TLS1.2
+[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor "Tls12"
+
+# Install PowerShell modules
+$modules = (Get-ToolsetContent).powershellModules
+
+foreach ($module in $modules) {
+    $moduleName = $module.name
+    Write-Host "Installing ${moduleName} module"
+
+    if ($module.versions) {
+        foreach ($version in $module.versions) {
+            Write-Host " - $version"
+            Install-Module -Name $moduleName -RequiredVersion $version -Scope AllUsers -SkipPublisherCheck -Force
+        }
+    } else {
+        Install-Module -Name $moduleName -Scope AllUsers -SkipPublisherCheck -Force
+    }
+}
+
+Import-Module Pester
+Invoke-PesterTests -TestFile "PowerShellModules" -TestName "PowerShellModules"
+
+####################################################################################
+##  File:  Install-WindowsFeatures.ps1
+##  Desc:  Install Windows Features
+####################################################################################
+
+$windowsFeatures = (Get-ToolsetContent).windowsFeatures
+
+foreach ($feature in $windowsFeatures) {
+    if ($feature.optionalFeature) {
+        Write-Host "Activating Windows Optional Feature '$($feature.name)'..."
+        Enable-WindowsOptionalFeature -Online -FeatureName $feature.name -NoRestart
+
+        $resultSuccess = $?
+    } else {
+        Write-Host "Activating Windows Feature '$($feature.name)'..."
+        $arguments = @{
+            Name                   = $feature.name
+            IncludeAllSubFeature   = [System.Convert]::ToBoolean($feature.includeAllSubFeatures)
+            IncludeManagementTools = [System.Convert]::ToBoolean($feature.includeManagementTools)
+        }
+        $result = Install-WindowsFeature @arguments
+
+        $resultSuccess = $result.Success
+    }
+
+    if ($resultSuccess) {
+        Write-Host "Windows Feature '$($feature.name)' was activated successfully"
+    } else {
+        throw "Failed to activate Windows Feature '$($feature.name)'"
+    }
+}
+
+# it improves Android emulator launch on Windows Server
+# https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/manage/manage-hyper-v-scheduler-types
+bcdedit /set hypervisorschedulertype root
+if ($LASTEXITCODE -ne 0) {
+    throw "Failed to set hypervisorschedulertype to root"
+}
+
+################################################################################
+##  File:  Install-Chocolatey.ps1
+##  Desc:  Install Chocolatey package manager
+################################################################################
+
+Write-Host "Set TLS1.2"
+[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor "Tls12"
+
+Write-Host "Install chocolatey"
+
+# Add to system PATH
+Add-MachinePathItem 'C:\ProgramData\Chocolatey\bin'
+Update-Environment
+
+# Verify and run choco installer
+$signatureThumbprint = "83AC7D88C66CB8680BCE802E0F0F5C179722764B"
+$installScriptPath = Invoke-DownloadWithRetry 'https://chocolatey.org/install.ps1'
+Test-FileSignature -Path $installScriptPath -ExpectedThumbprint $signatureThumbprint
+Invoke-Expression $installScriptPath
+
+# Turn off confirmation
+choco feature enable -n allowGlobalConfirmation
+
+# Initialize environmental variable ChocolateyToolsLocation by invoking choco Get-ToolsLocation function
+Import-Module "$env:ChocolateyInstall\helpers\chocolateyInstaller.psm1" -Force
+Get-ToolsLocation
+
+################################################################################
 ##  File:  Configure-BaseImage.ps1
 ##  Desc:  Prepare the base image for software installation
 ################################################################################
@@ -385,102 +584,6 @@ Resize-Partition -DriveLetter $driveLetter -Size $size.SizeMax
 Get-Volume | Select-Object DriveLetter, SizeRemaining, Size | Sort-Object DriveLetter
 
 ################################################################################
-##  File:  Configure-DeveloperMode.ps1
-##  Desc:  Enables Developer Mode by toggling registry setting. Developer Mode is required to enable certain tools (e.g. WinAppDriver). 
-################################################################################
-
-# Create AppModelUnlock if it doesn't exist, required for enabling Developer Mode
-$registryKeyPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock"
-if (-not(Test-Path -Path $registryKeyPath)) {
-    New-Item -Path $registryKeyPath -ItemType Directory -Force
-}
-
-# Add registry value to enable Developer Mode
-New-ItemProperty -Path $registryKeyPath -Name AllowDevelopmentWithoutDevLicense -PropertyType DWORD -Value 1
-
-################################################################################
-##  File:  Configure-Diagnostics.ps1
-##  Desc:  Disables Just-In-Time Debugger and Windows Error Reporting
-################################################################################
-
-Write-Host "Disable Just-In-Time Debugger"
-
-# Turn off Application Error Debugger
-New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug" -Name Debugger -Value "-" -Type String -Force
-New-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\AeDebug" -Name Debugger -Value "-" -Type String -Force
-
-# Turn off the Debug dialog
-New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\.NETFramework" -Name DbgManagedDebugger -Value "-" -Type String -Force
-New-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\.NETFramework" -Name DbgManagedDebugger -Value "-" -Type String -Force
-
-# Disable the WER UI
-New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting" -Name DontShowUI -Value 1 -Type DWORD -Force
-# Send all reports to the user's queue
-New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting" -Name ForceQueue -Value 1 -Type DWORD -Force
-# Default consent choice 1 - Always ask (default)
-New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting\Consent" -Name DefaultConsent -Value 1 -Type DWORD -Force
-
-################################################################################
-##  File:  Configure-DotnetSecureChannel.ps1
-##  Desc:  Configure .NET to use TLS 1.2
-################################################################################
-
-$registryPath = "HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319"
-$name = "SchUseStrongCrypto"
-$value = "1"
-if (Test-Path $registryPath) {
-    Set-ItemProperty -Path $registryPath -Name $name -Value $value -Type DWORD
-}
-
-$registryPath = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319"
-if (Test-Path $registryPath) {
-    Set-ItemProperty -Path $registryPath -Name $name -Value $value -Type DWORD
-}
-
-################################################################################
-##  File:  Configure-DynamicPort.ps1
-##  Desc:  Configure dynamic port range for TCP and UDP to start at port 49152
-##         and to end at the 65536 (16384 ports)
-################################################################################
-
-# https://support.microsoft.com/en-us/help/929851/the-default-dynamic-port-range-for-tcp-ip-has-changed-in-windows-vista
-# The new default start port is 49152, and the new default end port is 65535.
-# Default port configuration was changed during image generation by Visual Studio Enterprise Installer to:
-#   Protocol tcp Dynamic Port Range
-#   ---------------------------------
-#   Start Port      : 1024
-#   Number of Ports : 64511
-
-Write-Host "Set the dynamic port range to start at port 49152 and to end at the 65536 (16384 ports)"
-foreach ($ipVersion in @("ipv4", "ipv6")) {
-    foreach ($protocol in @("tcp", "udp")) {
-        $command = "netsh int $ipVersion set dynamicport $protocol start=49152 num=16384"
-        Invoke-Expression $command | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "Failed to set dynamic port range for $ipVersion $protocol"
-            exit $LASTEXITCODE
-        }
-    }
-}
-
-Invoke-PesterTests -TestFile "WindowsFeatures" -TestName "DynamicPorts"
-
-################################################################################
-##  File:  Configure-GDIProcessHandleQuota.ps1
-##  Desc:  Set the GDIProcessHandleQuota value to 20000
-################################################################################
-
-# https://docs.microsoft.com/en-us/windows/win32/sysinfo/gdi-objects
-# This value can be set to a number between 256 and 65,536
-
-$defaultValue = 20000
-Write-Host "Set the GDIProcessHandleQuota value to $defaultValue"
-Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" -Name GDIProcessHandleQuota -Value $defaultValue
-Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Windows" -Name GDIProcessHandleQuota -Value $defaultValue
-
-Invoke-PesterTests -TestFile "WindowsFeatures" -TestName "GDIProcessHandleQuota"
-
-################################################################################
 ##  File:  Configure-ImageDataFile.ps1
 ##  Desc:  Creates a JSON file with information about the image
 ################################################################################
@@ -525,43 +628,334 @@ $json = @"
 $json | Out-File -FilePath $imageDataFile
 
 ################################################################################
-##  File:  Configure-Powershell.ps1
-##  Desc:  Manage PowerShell configuration
+##  File:  Configure-SystemEnvironment.ps1
+##  Desc:  Configures system environment variables
 ################################################################################
 
-#region System
-Write-Host "Setup PowerShellGet"
-Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-
-# Specifies the installation policy
-Set-PSRepository -InstallationPolicy Trusted -Name PSGallery
-
-Write-Host 'Warmup PSModuleAnalysisCachePath (speedup first powershell invocation by 20s)'
-$PSModuleAnalysisCachePath = 'C:\PSModuleAnalysisCachePath\ModuleAnalysisCache'
-
-[Environment]::SetEnvironmentVariable('PSModuleAnalysisCachePath', $PSModuleAnalysisCachePath, "Machine")
-# make variable to be available in the current session
-${env:PSModuleAnalysisCachePath} = $PSModuleAnalysisCachePath
-
-New-Item -Path $PSModuleAnalysisCachePath -ItemType 'File' -Force | Out-Null
-#endregion
-
-#region User (current user, image generation only)
-if (-not (Test-Path $profile)) {
-    New-Item $profile -ItemType File -Force
+$variables = @{
+    "ImageVersion"                        = $env:IMAGE_VERSION
+    "ImageOS"                             = $env:IMAGE_OS
+    "AGENT_TOOLSDIRECTORY"                = $env:AGENT_TOOLSDIRECTORY
 }
-  
-@" 
-  if ( -not(Get-Module -ListAvailable -Name PowerHTML)) {
-      Install-Module PowerHTML -Scope CurrentUser 
-  } 
-  
-  if ( -not(Get-Module -Name PowerHTML)) {
-      Import-Module PowerHTML
-  } 
-"@ | Add-Content -Path $profile -Force
 
-#endregion
+$variables.GetEnumerator() | ForEach-Object {
+    [Environment]::SetEnvironmentVariable($_.Key, $_.Value, "Machine")
+}
+
+################################################################################
+##  File:  Configure-DotnetSecureChannel.ps1
+##  Desc:  Configure .NET to use TLS 1.2
+################################################################################
+
+$registryPath = "HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319"
+$name = "SchUseStrongCrypto"
+$value = "1"
+if (Test-Path $registryPath) {
+    Set-ItemProperty -Path $registryPath -Name $name -Value $value -Type DWORD
+}
+
+$registryPath = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319"
+if (Test-Path $registryPath) {
+    Set-ItemProperty -Path $registryPath -Name $name -Value $value -Type DWORD
+}
+
+################################################################################
+##  File:  Install-PowershellCore.ps1
+##  Desc:  Install PowerShell Core
+##  Supply chain security: checksum validation
+################################################################################
+
+$ErrorActionPreference = "Stop"
+
+$tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
+New-Item -ItemType Directory -Path $tempDir -Force -ErrorAction SilentlyContinue | Out-Null
+try {
+    $originalValue = [Net.ServicePointManager]::SecurityProtocol
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+
+    $metadata = Invoke-RestMethod https://raw.githubusercontent.com/PowerShell/PowerShell/master/tools/metadata.json
+    $release = $metadata.LTSReleaseTag[0] -replace '^v'
+    $downloadUrl = "https://github.com/PowerShell/PowerShell/releases/download/v${release}/PowerShell-${release}-win-x64.msi"
+
+    $installerName = Split-Path $downloadUrl -Leaf
+    $externalHash = Get-ChecksumFromUrl -Type "SHA256" `
+        -Url ($downloadUrl -replace $installerName, "hashes.sha256") `
+        -FileName $installerName
+    Install-Binary -Url $downloadUrl -ExpectedSHA256Sum $externalHash
+} finally {
+    # Restore original value
+    [Net.ServicePointManager]::SecurityProtocol = $originalValue
+    Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+# about_update_notifications
+# While the update check happens during the first session in a given 24-hour period, for performance reasons,
+# the notification will only be shown on the start of subsequent sessions.
+# Also for performance reasons, the check will not start until at least 3 seconds after the session begins.
+[Environment]::SetEnvironmentVariable("POWERSHELL_UPDATECHECK", "Off", "Machine")
+
+Invoke-PesterTests -TestFile "Tools" -TestName "PowerShell Core"
+
+################################################################################
+##  File:  Install-WebPI.ps1
+##  Desc:  Install WebPlatformInstaller
+################################################################################
+
+Install-Binary -Type MSI `
+    -Url 'http://go.microsoft.com/fwlink/?LinkId=287166' `
+    -ExpectedSignature 'C3A3D43788E7ABCD287CB4F5B6583043774F99D2'
+
+Invoke-PesterTests -TestFile "Tools" -TestName "WebPlatformInstaller"
+
+
+################################################################################
+##  File:  Install-Runner.ps1
+##  Desc:  Install Runner for GitHub Actions
+##  Supply chain security: none
+################################################################################
+
+Write-Host "Download latest Runner for GitHub Actions"
+$downloadUrl = Resolve-GithubReleaseAssetUrl `
+    -Repo "actions/runner" `
+    -Version "latest" `
+    -UrlMatchPattern "actions-runner-win-x64-*[0-9.].zip"
+$fileName = Split-Path $downloadUrl -Leaf
+New-Item -Path "C:\ProgramData\runner" -ItemType Directory
+Invoke-DownloadWithRetry -Url $downloadUrl -Path "C:\ProgramData\runner\$fileName"
+
+Invoke-PesterTests -TestFile "RunnerCache"
+
+
+
+
+
+
+
+
+################################################################################
+##  File:  Install-AzureCli.ps1
+##  Desc:  Install and warm-up Azure CLI
+################################################################################
+
+Write-Host 'Install the latest Azure CLI release'
+
+$azureCliConfigPath = 'C:\azureCli'
+# Store azure-cli cache outside of the provisioning user's profile
+[Environment]::SetEnvironmentVariable('AZURE_CONFIG_DIR', $azureCliConfigPath, "Machine")
+
+$azureCliExtensionPath = Join-Path $env:CommonProgramFiles 'AzureCliExtensionDirectory'
+New-Item -ItemType 'Directory' -Path $azureCliExtensionPath | Out-Null
+[Environment]::SetEnvironmentVariable('AZURE_EXTENSION_DIR', $azureCliExtensionPath, "Machine")
+
+Install-Binary -Type MSI `
+    -Url 'https://aka.ms/installazurecliwindowsx64' `
+    -ExpectedSignature '72105B6D5F370B62FD5C82F1512F7AD7DEE5F2C0'
+
+Update-Environment
+
+# Warm-up Azure CLI
+Write-Host "Warmup 'az'"
+az --help | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    throw "Command 'az --help' failed"
+}
+
+Invoke-PesterTests -TestFile 'CLI.Tools' -TestName 'Azure CLI'
+
+################################################################################
+##  File:  Install-AzureDevOpsCli.ps1
+##  Desc:  Install Azure DevOps CLI
+################################################################################
+
+$azureDevOpsCliConfigPath = 'C:\azureDevOpsCli'
+# Store azure-devops-cli cache outside of the provisioning user's profile
+[Environment]::SetEnvironmentVariable('AZ_DEVOPS_GLOBAL_CONFIG_DIR', $azureDevOpsCliConfigPath, "Machine")
+
+$azureDevOpsCliCachePath = Join-Path $azureDevOpsCliConfigPath 'cache'
+New-Item -ItemType 'Directory' -Path $azureDevOpsCliCachePath | Out-Null
+[Environment]::SetEnvironmentVariable('AZURE_DEVOPS_CACHE_DIR', $azureDevOpsCliCachePath, "Machine")
+
+Update-Environment
+
+az extension add -n azure-devops
+if ($LASTEXITCODE -ne 0) {
+    throw "Command 'az extension add -n azure-devops' failed"
+}
+
+# Warm-up Azure DevOps CLI
+Write-Host "Warmup 'az-devops'"
+@('devops', 'pipelines', 'boards', 'repos', 'artifacts') | ForEach-Object {
+    az $_ --help
+    if ($LASTEXITCODE -ne 0) {
+        throw "Command 'az $_ --help' failed"
+    }
+}
+
+# calling az devops login to force it to install `keyring`. Login will actually fail, redirecting error to null
+Write-Output 'fake token' | az devops login | Out-Null
+# calling az devops logout to be sure no credentials remain.
+az devops logout | out-null
+
+Invoke-PesterTests -TestFile 'CLI.Tools' -TestName 'Azure DevOps CLI'
+
+################################################################################
+##  File:  Install-PyPy.ps1
+##  Desc:  Install PyPy
+##  Supply chain security: checksum validation
+################################################################################
+
+function Install-PyPy {
+    param(
+        [String] $PackagePath,
+        [String] $Architecture
+    )
+
+    # Create PyPy toolcache folder
+    $pypyToolcachePath = Join-Path -Path $env:AGENT_TOOLSDIRECTORY -ChildPath "PyPy"
+    if (-not (Test-Path $pypyToolcachePath)) {
+        Write-Host "Create PyPy toolcache folder"
+        New-Item -ItemType Directory -Path $pypyToolcachePath | Out-Null
+    }
+
+    # Expand archive with binaries
+    $packageName = [IO.Path]::GetFileNameWithoutExtension((Split-Path -Path $packagePath -Leaf))
+    $tempFolder = Join-Path -Path $pypyToolcachePath -ChildPath $packageName
+    Expand-7ZipArchive -Path $packagePath -DestinationPath $pypyToolcachePath
+
+    # Get Python version from binaries
+    $pypyApp = Get-ChildItem -Path "$tempFolder\pypy*.exe" | Where-Object Name -match "pypy(\d+)?.exe" | Select-Object -First 1
+    $pythonVersion = & $pypyApp -c "import sys;print('{}.{}.{}'.format(sys.version_info[0],sys.version_info[1],sys.version_info[2]))"
+
+    $pypyFullVersion = & $pypyApp -c "import sys;print('{}.{}.{}'.format(*sys.pypy_version_info[0:3]))"
+    Write-Host "Put '$pypyFullVersion' to PYPY_VERSION file"
+    New-Item -Path "$tempFolder\PYPY_VERSION" -Value $pypyFullVersion | Out-Null
+
+    if ($pythonVersion) {
+        Write-Host "Installing PyPy $pythonVersion"
+        $pypyVersionPath = Join-Path -Path $pypyToolcachePath -ChildPath $pythonVersion
+        $pypyArchPath = Join-Path -Path $pypyVersionPath -ChildPath $architecture
+
+        Write-Host "Create PyPy '${pythonVersion}' folder in '${pypyVersionPath}'"
+        New-Item -ItemType Directory -Path $pypyVersionPath -Force | Out-Null
+
+        Write-Host "Move PyPy '${pythonVersion}' files to '${pypyArchPath}'"
+        Invoke-ScriptBlockWithRetry -Command {
+            Move-Item -Path $tempFolder -Destination $pypyArchPath -ErrorAction Stop | Out-Null
+        }
+
+        Write-Host "Install PyPy '${pythonVersion}' in '${pypyArchPath}'"
+        if (Test-Path "$pypyArchPath\python.exe") {
+            cmd.exe /c "cd /d $pypyArchPath && python.exe -m ensurepip && python.exe -m pip install --upgrade pip"
+        } else {
+            $pypyName = $pypyApp.Name
+            cmd.exe /c "cd /d $pypyArchPath && mklink python.exe $pypyName && python.exe -m ensurepip && python.exe -m pip install --upgrade pip"
+        }
+
+        # Create pip.exe if missing
+        $pipPath = Join-Path -Path $pypyArchPath -ChildPath "Scripts/pip.exe"
+        if (-not (Test-Path $pipPath)) {
+            $pip3Path = Join-Path -Path $pypyArchPath -ChildPath "Scripts/pip3.exe"
+            Copy-Item -Path $pip3Path -Destination $pipPath 
+        }
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "PyPy installation failed with exit code $LASTEXITCODE"
+        }
+
+        Write-Host "Create complete file"
+        New-Item -ItemType File -Path $pypyVersionPath -Name "$architecture.complete" | Out-Null
+    } else {
+        throw "PyPy application is not found. Failed to expand '$packagePath' archive"
+    }
+}
+
+# Get PyPy content from toolset
+$toolsetVersions = Get-ToolsetContent | Select-Object -ExpandProperty toolcache | Where-Object Name -eq "PyPy"
+
+# Get PyPy releases
+$pypyVersions = Invoke-RestMethod https://downloads.python.org/pypy/versions.json
+
+# required for html parsing
+$checksums = (Invoke-RestMethod -Uri 'https://www.pypy.org/checksums.html' | ConvertFrom-HTML).SelectNodes('//*[@id="content"]/article/div/pre')
+
+Write-Host "Start PyPy installation"
+foreach ($toolsetVersion in $toolsetVersions.versions) {
+    # Query latest PyPy version
+    $latestMajorPyPyVersion = $pypyVersions |
+        Where-Object { $_.python_version.StartsWith("$toolsetVersion") -and $_.stable -eq $true } |
+        Select-Object -ExpandProperty files -First 1 |
+        Where-Object platform -like "win*"
+    
+    if (-not $latestMajorPyPyVersion) {
+        throw "Failed to query PyPy version '$toolsetVersion'"
+    }
+
+    $filename = $latestMajorPyPyVersion.filename
+    Write-Host "Found PyPy '$filename' package"
+    $tempPyPyPackagePath = Invoke-DownloadWithRetry $latestMajorPyPyVersion.download_url
+
+    #region Supply chain security
+    $distributorFileHash = $null
+    foreach ($node in $checksums) {
+        if ($node.InnerText -ilike "*${filename}*") {
+            $distributorFileHash = $node.InnerText.ToString().Split("`n").Where({ $_ -ilike "*${filename}*" }).Split(' ')[0]
+        }
+    }
+    Test-FileChecksum $tempPyPyPackagePath -ExpectedSHA256Sum $distributorFileHash
+    #endregion
+
+    Install-PyPy -PackagePath $tempPyPyPackagePath -Architecture $toolsetVersions.arch
+}
+
+################################################################################
+##  File:  Install-PowershellAzModules.ps1
+##  Desc:  Install PowerShell modules used by AzureFileCopy@4, AzureFileCopy@5, AzurePowerShell@4, AzurePowerShell@5 tasks
+##  Supply chain security: package manager
+################################################################################
+
+# The correct Modules need to be saved in C:\Modules
+$installPSModulePath = "C:\\Modules"
+if (-not (Test-Path -LiteralPath $installPSModulePath)) {
+    Write-Host "Creating ${installPSModulePath} folder to store PowerShell Azure modules..."
+    New-Item -Path $installPSModulePath -ItemType Directory | Out-Null
+}
+
+# Get modules content from toolset
+$modules = (Get-ToolsetContent).azureModules
+
+$psModuleMachinePath = ""
+
+foreach ($module in $modules) {
+    $moduleName = $module.name
+
+    Write-Host "Installing ${moduleName} to the ${installPSModulePath} path..."
+    foreach ($version in $module.versions) {
+        $modulePath = Join-Path -Path $installPSModulePath -ChildPath "${moduleName}_${version}"
+        Write-Host " - $version [$modulePath]"
+        Save-Module -Path $modulePath -Name $moduleName -RequiredVersion $version -Force -ErrorAction Stop
+    }
+
+    foreach ($version in $module.zip_versions) {
+        $modulePath = Join-Path -Path $installPSModulePath -ChildPath "${moduleName}_${version}"
+        Save-Module -Path $modulePath -Name $moduleName -RequiredVersion $version -Force -ErrorAction Stop
+        Compress-Archive -Path $modulePath -DestinationPath "${modulePath}.zip"
+        Remove-Item $modulePath -Recurse -Force
+    }
+    # Append default tool version to machine path
+    if ($null -ne $module.default) {
+        $defaultVersion = $module.default
+
+        Write-Host "Use ${moduleName} ${defaultVersion} as default version..."
+        $psModuleMachinePath += "${installPSModulePath}\${moduleName}_${defaultVersion};"
+    }
+}
+
+# Add modules to the PSModulePath
+$psModuleMachinePath += $env:PSModulePath
+[Environment]::SetEnvironmentVariable("PSModulePath", $psModuleMachinePath, "Machine")
+
+Invoke-PesterTests -TestFile "PowerShellAzModules" -TestName "AzureModules"
+
 
 # Create shells folder
 $shellPath = "C:\shells"
@@ -582,6 +976,43 @@ New-Item -ItemType SymbolicLink -Path "$shellPath\gitbash.exe" -Target "$env:Pro
 
 # wslbash <--> C:\Windows\System32\bash.exe
 New-Item -ItemType SymbolicLink -Path "$shellPath\wslbash.exe" -Target "$env:SystemRoot\System32\bash.exe" | Out-Null
+
+################################################################################
+##  File:  Configure-DeveloperMode.ps1
+##  Desc:  Enables Developer Mode by toggling registry setting. Developer Mode is required to enable certain tools (e.g. WinAppDriver). 
+################################################################################
+
+# Create AppModelUnlock if it doesn't exist, required for enabling Developer Mode
+$registryKeyPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock"
+if (-not(Test-Path -Path $registryKeyPath)) {
+    New-Item -Path $registryKeyPath -ItemType Directory -Force
+}
+
+# Add registry value to enable Developer Mode
+New-ItemProperty -Path $registryKeyPath -Name AllowDevelopmentWithoutDevLicense -PropertyType DWORD -Value 1
+
+################################################################################
+##  File: Install-NativeImages.ps1
+##  Desc: Generate and install native images for .NET assemblies
+################################################################################
+
+Write-Host "NGen: install Microsoft.PowerShell.Utility.Activities..."
+& $env:SystemRoot\Microsoft.NET\Framework64\v4.0.30319\ngen.exe install "Microsoft.PowerShell.Utility.Activities, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    throw "Installation of Microsoft.PowerShell.Utility.Activities failed with exit code $LASTEXITCODE"
+}
+
+Write-Host "NGen: update x64 native images..."
+& $env:SystemRoot\Microsoft.NET\Framework64\v4.0.30319\ngen.exe update | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    throw "Update of x64 native images failed with exit code $LASTEXITCODE"
+}
+
+Write-Host "NGen: update x86 native images..."
+& $env:SystemRoot\Microsoft.NET\Framework\v4.0.30319\ngen.exe update | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    throw "Update of x86 native images failed with exit code $LASTEXITCODE"
+}
 
 ################################################################################
 ##  File:  Configure-System.ps1
@@ -781,82 +1212,6 @@ $disableTaskNames | ForEach-Object {
 Write-Host "Finalize-VM.ps1 - completed"
 
 ################################################################################
-##  File:  Configure-SystemEnvironment.ps1
-##  Desc:  Configures system environment variables
-################################################################################
-
-$variables = @{
-    "ImageVersion"                        = $env:IMAGE_VERSION
-    "ImageOS"                             = $env:IMAGE_OS
-    "AGENT_TOOLSDIRECTORY"                = $env:AGENT_TOOLSDIRECTORY
-}
-
-$variables.GetEnumerator() | ForEach-Object {
-    [Environment]::SetEnvironmentVariable($_.Key, $_.Value, "Machine")
-}
-
-################################################################################
-##  File:  Configure-Toolset.ps1
-##  Team:  CI-Build
-##  Desc:  Configure Toolset
-################################################################################
-
-$toolEnvConfigs = @{
-    Python = @{
-        pathTemplates = @(
-            "{0}"
-            "{0}\Scripts"
-        )
-    }
-    go     = @{
-        pathTemplates  = @(
-            "{0}\bin"
-        )
-        envVarTemplate = "GOROOT_{0}_{1}_X64"
-    }
-}
-
-$tools = Get-ToolsetContent `
-| Select-Object -ExpandProperty toolcache `
-| Where-Object { $toolEnvConfigs.Keys -contains $_.name }
-
-Write-Host "Configure toolset tools environment..."
-foreach ($tool in $tools) {
-    $toolEnvConfig = $toolEnvConfigs[$tool.name]
-    
-    if (-not ([string]::IsNullOrEmpty($toolEnvConfig.envVarTemplate))) {
-        foreach ($version in $tool.versions) {
-            Write-Host "Set $($tool.name) $version environment variable..."
-
-            $foundVersionArchPath = Get-TCToolVersionPath -Name $tool.name -Version $version -Arch $tool.arch
-            $envName = $toolEnvConfig.envVarTemplate -f $version.Split(".")
-
-            Write-Host "Set $envName to $foundVersionArchPath"
-            [Environment]::SetEnvironmentVariable($envName, $foundVersionArchPath, "Machine")
-        }
-    }
-
-    if (-not ([string]::IsNullOrEmpty($tool.default))) {
-        Write-Host "Use $($tool.name) $($tool.default) as a system $($tool.name)..."
-
-        $toolVersionPath = Get-TCToolVersionPath -Name $tool.name -Version $tool.default -Arch $tool.arch
-
-        foreach ($template in $toolEnvConfig.pathTemplates) {
-            $toolSystemPath = $template -f $toolVersionPath
-            Write-Host "Add $toolSystemPath to system PATH..."
-            Add-MachinePathItem -PathItem $toolSystemPath | Out-Null
-        }
-    
-        if (-not ([string]::IsNullOrEmpty($tool.defaultVariable))) {
-            Write-Host "Set $($tool.name) $($tool.default) $($tool.defaultVariable) environment variable..."
-            [Environment]::SetEnvironmentVariable($tool.defaultVariable, $toolVersionPath, "Machine")
-        }
-    }
-}
-
-Invoke-PesterTests -TestFile "Toolset"
-
-################################################################################
 ##  File:  Configure-User.ps1
 ##  Desc:  Performs user part of warm up and moves data to C:\Users\Default
 ################################################################################
@@ -901,79 +1256,4 @@ Dismount-RegistryHive "HKLM\DEFAULT"
 
 Write-Host "Configure-User.ps1 - completed"
 
-################################################################################
-##  File:  Configure-WindowsDefender.ps1
-##  Desc:  Disables Windows Defender
-################################################################################
 
-Write-Host "Disable Windows Defender..."
-$avPreference = @(
-    @{DisableArchiveScanning = $true}
-    @{DisableAutoExclusions = $true}
-    @{DisableBehaviorMonitoring = $true}
-    @{DisableBlockAtFirstSeen = $true}
-    @{DisableCatchupFullScan = $true}
-    @{DisableCatchupQuickScan = $true}
-    @{DisableIntrusionPreventionSystem = $true}
-    @{DisableIOAVProtection = $true}
-    @{DisablePrivacyMode = $true}
-    @{DisableScanningNetworkFiles = $true}
-    @{DisableScriptScanning = $true}
-    @{MAPSReporting = 0}
-    @{PUAProtection = 0}
-    @{SignatureDisableUpdateOnStartupWithoutEngine = $true}
-    @{SubmitSamplesConsent = 2}
-    @{ScanAvgCPULoadFactor = 5; ExclusionPath = @("D:\", "C:\")}
-    @{DisableRealtimeMonitoring = $true}
-    @{ScanScheduleDay = 8}
-)
-
-$avPreference += @(
-    @{EnableControlledFolderAccess = "Disable"}
-    @{EnableNetworkProtection = "Disabled"}
-)
-
-$avPreference | Foreach-Object {
-    $avParams = $_
-    Set-MpPreference @avParams
-}
-
-# https://github.com/actions/runner-images/issues/4277
-# https://docs.microsoft.com/en-us/microsoft-365/security/defender-endpoint/microsoft-defender-antivirus-compatibility?view=o365-worldwide
-$atpRegPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Advanced Threat Protection'
-if (Test-Path $atpRegPath) {
-    Write-Host "Set Microsoft Defender Antivirus to passive mode"
-    Set-ItemProperty -Path $atpRegPath -Name 'ForceDefenderPassiveMode' -Value '1' -Type 'DWORD'
-}
-
-
-
-################################################################################
-##  File:  Install-AzureCli.ps1
-##  Desc:  Install and warm-up Azure CLI
-################################################################################
-
-Write-Host 'Install the latest Azure CLI release'
-
-$azureCliConfigPath = 'C:\azureCli'
-# Store azure-cli cache outside of the provisioning user's profile
-[Environment]::SetEnvironmentVariable('AZURE_CONFIG_DIR', $azureCliConfigPath, "Machine")
-
-$azureCliExtensionPath = Join-Path $env:CommonProgramFiles 'AzureCliExtensionDirectory'
-New-Item -ItemType 'Directory' -Path $azureCliExtensionPath | Out-Null
-[Environment]::SetEnvironmentVariable('AZURE_EXTENSION_DIR', $azureCliExtensionPath, "Machine")
-
-Install-Binary -Type MSI `
-    -Url 'https://aka.ms/installazurecliwindowsx64' `
-    -ExpectedSignature '72105B6D5F370B62FD5C82F1512F7AD7DEE5F2C0'
-
-Update-Environment
-
-# Warm-up Azure CLI
-Write-Host "Warmup 'az'"
-az --help | Out-Null
-if ($LASTEXITCODE -ne 0) {
-    throw "Command 'az --help' failed"
-}
-
-Invoke-PesterTests -TestFile 'CLI.Tools' -TestName 'Azure CLI'
