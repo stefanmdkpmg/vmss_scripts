@@ -14,4 +14,4 @@ echo "AZURE_EXTENSION_DIR=/opt/az/azcliextensions" | sudo tee -a /etc/environmen
 # install azure devops Cli extension
 az extension add -n azure-devops
 
-sudo apt install unzip
+sudo apt-get install -y unzip
