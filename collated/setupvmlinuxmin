@@ -328,7 +328,8 @@ function getOSVersionLabel
 }
 
 
-
+sudo su
+apt update
 
 ################################################################################
 ##  File:  install-python.sh
