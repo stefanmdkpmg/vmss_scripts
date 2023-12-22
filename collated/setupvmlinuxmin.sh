@@ -1,7 +1,5 @@
 #!/bin/bash -e
 
-sudo apt install unzip
-
 # Install Azure CLI (instructions taken from https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 curl -fsSL https://aka.ms/InstallAzureCLIDeb | sudo bash
 echo "azure-cli https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt" >> $HELPER_SCRIPTS/apt-sources.txt
@@ -16,3 +14,4 @@ echo "AZURE_EXTENSION_DIR=/opt/az/azcliextensions" | sudo tee -a /etc/environmen
 # install azure devops Cli extension
 az extension add -n azure-devops
 
+sudo apt install unzip
