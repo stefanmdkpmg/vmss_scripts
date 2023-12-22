@@ -1,4 +1,6 @@
+#!/bin/bash -e
 
+sudo apt install unzip
 
 ################################################################################
 ##  File:  install-azure-cli.sh
