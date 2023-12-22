@@ -592,3 +592,5 @@ if npm --version
 then
   npm cache clean --force
 fi
+
+sudo reboot
