@@ -1,5 +1,4 @@
 #!/bin/bash -e
-exit 1
 
 # Install Azure CLI (instructions taken from https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 curl -fsSL https://aka.ms/InstallAzureCLIDeb | sudo bash
