@@ -18,7 +18,6 @@ set -e
 # Add your script below....
 # If an error occurs, the abort() function will be called.
 #----------------------------------------------------------
-# ===> Your script goes here
 # Install Azure CLI (instructions taken from https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 curl -fsSL https://aka.ms/InstallAzureCLIDeb | sudo bash
 echo "azure-cli https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt" >> $HELPER_SCRIPTS/apt-sources.txt
@@ -33,8 +32,10 @@ echo "AZURE_EXTENSION_DIR=/opt/az/azcliextensions" | sudo tee -a /etc/environmen
 # install azure devops Cli extension
 az extension add -n azure-devops
 
+# install unzip
 sudo apt-get install -y unzip
 
+# Make sure az cli is installed. If it is not, it will throw an error which can be captured by the VMSS
 az version
 
 # Done!
