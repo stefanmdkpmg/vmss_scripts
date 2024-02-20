@@ -1,0 +1,273 @@
+2024-02-20T14:46:51.1017900Z ##[section]Starting: Bash
+2024-02-20T14:46:51.1021074Z ==============================================================================
+2024-02-20T14:46:51.1021152Z Task         : Bash
+2024-02-20T14:46:51.1021189Z Description  : Run a Bash script on macOS, Linux, or Windows
+2024-02-20T14:46:51.1021256Z Version      : 3.231.5
+2024-02-20T14:46:51.1021388Z Author       : Microsoft Corporation
+2024-02-20T14:46:51.1021434Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/bash
+2024-02-20T14:46:51.1021496Z ==============================================================================
+2024-02-20T14:46:52.6792433Z Generating script.
+2024-02-20T14:46:52.6812547Z ========================== Starting Command Output ===========================
+2024-02-20T14:46:52.6826411Z [command]/usr/bin/bash /agent/_work/_temp/a3d8283d-8568-4f29-9b8a-974b6a18af9e.sh
+2024-02-20T14:46:52.6870547Z ===================
+2024-02-20T14:46:52.6870748Z List extensio1 logs
+2024-02-20T14:46:52.6871092Z ===================
+2024-02-20T14:46:52.6878455Z total 12
+2024-02-20T14:46:52.6881405Z drwxr-xr-x 3 root root 4096 Feb 20 14:45 Microsoft.Azure.Extensions.CustomScript
+2024-02-20T14:46:52.6882156Z drwxr-xr-x 3 root root 4096 Feb 20 14:46 Microsoft.VisualStudio.Services.TeamServicesAgentLinux
+2024-02-20T14:46:52.6882774Z drwxr-xr-x 2 root root 4096 Feb 20 14:45 custom-script
+2024-02-20T14:46:52.6883188Z ===================
+2024-02-20T14:46:52.6883515Z List extensio2 logs
+2024-02-20T14:46:52.6883689Z ===================
+2024-02-20T14:46:52.6894064Z total 8
+2024-02-20T14:46:52.6894749Z -rw-r--r-- 1 root root 4254 Feb 20 14:45 handler.log
+2024-02-20T14:46:52.6900144Z ===================================
+2024-02-20T14:46:52.6900667Z List  Extension settings and status
+2024-02-20T14:46:52.6901143Z ===================================
+2024-02-20T14:46:52.7099612Z total 3000
+2024-02-20T14:46:52.7100354Z -r-------- 1 root root   1282 Feb 20 14:45 048FEA978F582C6862C8EB22DC164135FAE57CC6.crt
+2024-02-20T14:46:52.7100810Z -r-------- 1 root root   1864 Feb 20 14:45 048FEA978F582C6862C8EB22DC164135FAE57CC6.prv
+2024-02-20T14:46:52.7101254Z -r-------- 1 root root   4156 Feb 20 14:45 Certificates.p7m
+2024-02-20T14:46:52.7101559Z -r-------- 1 root root   3146 Feb 20 14:45 Certificates.pem
+2024-02-20T14:46:52.7101972Z -rw-r--r-- 1 root root   4315 Feb 20 14:45 Certificates.xml
+2024-02-20T14:46:52.7102479Z -rw-r--r-- 1 root root     33 Feb 20 14:45 GoalState.1.xml
+2024-02-20T14:46:52.7102794Z -rw-r--r-- 1 root root      1 Feb 20 14:45 Incarnation
+2024-02-20T14:46:52.7103361Z drwxr-xr-x 5 root root   4096 Feb 20 14:45 Microsoft.Azure.Extensions.CustomScript-2.1.10
+2024-02-20T14:46:52.7103814Z drwxr-xr-x 7 root root   4096 Feb 20 14:46 Microsoft.VisualStudio.Services.TeamServicesAgentLinux-1.23.0.1
+2024-02-20T14:46:52.7104168Z -rw-r--r-- 1 root root     12 Feb 20 14:45 Protocol
+2024-02-20T14:46:52.7104497Z -rw-r--r-- 1 root root    960 Feb 20 14:45 SharedConfig.xml
+2024-02-20T14:46:52.7104825Z -r-------- 1 root root   1127 Feb 20 14:45 TransportCert.pem
+2024-02-20T14:46:52.7105178Z -r-------- 1 root root   1704 Feb 20 14:45 TransportPrivate.pem
+2024-02-20T14:46:52.7105507Z drwxr-xr-x 3 root root   4096 Feb 20 14:45 WALinuxAgent-2.7.3.0
+2024-02-20T14:46:52.7105990Z -rw-r--r-- 1 root root 711502 Feb 20 14:45 WALinuxAgent-2.7.3.0.zip
+2024-02-20T14:46:52.7106348Z drwxr-xr-x 3 root root   4096 Feb 20 14:45 WALinuxAgent-2.8.0.11
+2024-02-20T14:46:52.7106705Z -rw-r--r-- 1 root root 729876 Feb 20 14:45 WALinuxAgent-2.8.0.11.zip
+2024-02-20T14:46:52.7107057Z drwxr-xr-x 3 root root   4096 Feb 20 14:45 WALinuxAgent-2.9.0.4
+2024-02-20T14:46:52.7107410Z -rw-r--r-- 1 root root 742558 Feb 20 14:45 WALinuxAgent-2.9.0.4.zip
+2024-02-20T14:46:52.7107710Z drwxr-xr-x 3 root root   4096 Feb 20 14:45 WALinuxAgent-2.9.1.1
+2024-02-20T14:46:52.7108065Z -rw-r--r-- 1 root root 753671 Feb 20 14:45 WALinuxAgent-2.9.1.1.zip
+2024-02-20T14:46:52.7108410Z -rw-r--r-- 1 root root     13 Feb 20 14:45 WireServerEndpoint
+2024-02-20T14:46:52.7108727Z drwxr-xr-x 3 root root   4096 Feb 20 14:45 custom-script
+2024-02-20T14:46:52.7109248Z -rw-r--r-- 1 root root     40 Feb 20 14:45 event_status.json
+2024-02-20T14:46:52.7109541Z drwx------ 2 root root   4096 Feb 20 14:46 events
+2024-02-20T14:46:52.7112434Z drwxr-xr-x 3 root root   4096 Feb 20 14:45 history
+2024-02-20T14:46:52.7112908Z -rw-r--r-- 1 root root    127 Feb 20 14:46 initial_goal_state
+2024-02-20T14:46:52.7113381Z -r-------- 1 root root   1352 Feb 20 14:44 ovf-env.xml
+2024-02-20T14:46:52.7113682Z -rw-r--r-- 1 root root      2 Feb 20 14:45 partition
+2024-02-20T14:46:52.7113993Z -rw-r--r-- 1 root root     36 Feb 20 14:45 provisioned
+2024-02-20T14:46:52.7114305Z -rw-r--r-- 1 root root     15 Feb 20 14:45 published_hostname
+2024-02-20T14:46:52.7114644Z -rw-r--r-- 1 root root    554 Feb 20 14:45 waagent-network-setup.py
+2024-02-20T14:46:52.7120162Z ===================
+2024-02-20T14:46:52.7120383Z Report extensi logs
+2024-02-20T14:46:52.7120678Z ===================
+2024-02-20T14:46:52.7120980Z cat /var/log/azure/custom-script/handler.log
+2024-02-20T14:46:52.7131133Z + /var/lib/waagent/Microsoft.Azure.Extensions.CustomScript-2.1.10/bin/custom-script-extension install
+2024-02-20T14:46:52.7131891Z time=2024-02-20T14:45:06Z version=v2.1.10/git@d7e2520-clean operation=install seq=1 event=start
+2024-02-20T14:46:52.7132529Z time=2024-02-20T14:45:06Z version=v2.1.10/git@d7e2520-clean operation=install seq=1 status="not reported for operation (by design)"
+2024-02-20T14:46:52.7133330Z time=2024-02-20T14:45:06Z version=v2.1.10/git@d7e2520-clean operation=install seq=1 event="created data dir" path=/var/lib/waagent/custom-script
+2024-02-20T14:46:52.7133860Z time=2024-02-20T14:45:06Z version=v2.1.10/git@d7e2520-clean operation=install seq=1 event=installed
+2024-02-20T14:46:52.7134361Z time=2024-02-20T14:45:06Z version=v2.1.10/git@d7e2520-clean operation=install seq=1 status="not reported for operation (by design)"
+2024-02-20T14:46:52.7134813Z time=2024-02-20T14:45:06Z version=v2.1.10/git@d7e2520-clean operation=install seq=1 event=end
+2024-02-20T14:46:52.7135325Z Writing a placeholder status file indicating progress before forking: /var/lib/waagent/Microsoft.Azure.Extensions.CustomScript-2.1.10/status/1.status
+2024-02-20T14:46:52.7135797Z + nohup /var/lib/waagent/Microsoft.Azure.Extensions.CustomScript-2.1.10/bin/custom-script-extension enable
+2024-02-20T14:46:52.7136229Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event=start
+2024-02-20T14:46:52.7136670Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event=pre-check
+2024-02-20T14:46:52.7137136Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event="comparing seqnum" path=mrseq
+2024-02-20T14:46:52.7137622Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event="seqnum saved" path=mrseq
+2024-02-20T14:46:52.7138088Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event="reading configuration"
+2024-02-20T14:46:52.7138538Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event="read configuration"
+2024-02-20T14:46:52.7139008Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event="validating json schema"
+2024-02-20T14:46:52.7139468Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event="json schema valid"
+2024-02-20T14:46:52.7139952Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event="parsing configuration json"
+2024-02-20T14:46:52.7140415Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event="parsed configuration json"
+2024-02-20T14:46:52.7140923Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event="validating configuration logically"
+2024-02-20T14:46:52.7141411Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event="validated configuration"
+2024-02-20T14:46:52.7141967Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event="creating output directory" path=/var/lib/waagent/custom-script/download/1
+2024-02-20T14:46:52.7142635Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event="created output directory"
+2024-02-20T14:46:52.7143085Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 files=1
+2024-02-20T14:46:52.7143634Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 file=0 event="download start"
+2024-02-20T14:46:52.7144271Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 file=0 retry=0 info="starting download with client request ID 1d7bebf5-b809-472b-9628-fd37c284992d"
+2024-02-20T14:46:52.7144866Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 file=0 retry=0 info="file download sucessful: downloaded and saved 4111 bytes in 229 milliseconds"
+2024-02-20T14:46:52.7145392Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 file=0 event="download complete" output=/var/lib/waagent/custom-script/download/1
+2024-02-20T14:46:52.7145997Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event="executing command" output=/var/lib/waagent/custom-script/download/1
+2024-02-20T14:46:52.7146565Z time=2024-02-20T14:45:08Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event="executing public commandToExecute" output=/var/lib/waagent/custom-script/download/1
+2024-02-20T14:46:52.7147162Z time=2024-02-20T14:45:51Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event="executed command" output=/var/lib/waagent/custom-script/download/1
+2024-02-20T14:46:52.7147649Z time=2024-02-20T14:45:51Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event=enabled
+2024-02-20T14:46:52.7148152Z time=2024-02-20T14:45:51Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event="clearing settings and script files except most recent seq num"
+2024-02-20T14:46:52.7148599Z time=2024-02-20T14:45:51Z version=v2.1.10/git@d7e2520-clean operation=enable seq=1 event=end
+2024-02-20T14:46:52.7148865Z ===============
+2024-02-20T14:46:52.7149003Z Report ap1 logs
+2024-02-20T14:46:52.7149163Z ===============
+2024-02-20T14:46:52.7149325Z cat /var/log/apt/term.log
+2024-02-20T14:46:52.7149490Z 
+2024-02-20T14:46:52.7149728Z Log started: 2024-02-20  14:45:23
+2024-02-20T14:46:52.7154405Z Selecting previously unselected package azure-cli.
+2024-02-20T14:46:52.7154623Z (Reading database ... 
+2024-02-20T14:46:52.7154818Z (Reading database ... 5%
+2024-02-20T14:46:52.7154980Z (Reading database ... 10%
+2024-02-20T14:46:52.7155154Z (Reading database ... 15%
+2024-02-20T14:46:52.7155325Z (Reading database ... 20%
+2024-02-20T14:46:52.7155487Z (Reading database ... 25%
+2024-02-20T14:46:52.7155659Z (Reading database ... 30%
+2024-02-20T14:46:52.7155818Z (Reading database ... 35%
+2024-02-20T14:46:52.7155992Z (Reading database ... 40%
+2024-02-20T14:46:52.7156150Z (Reading database ... 45%
+2024-02-20T14:46:52.7156323Z (Reading database ... 50%
+2024-02-20T14:46:52.7156486Z (Reading database ... 55%
+2024-02-20T14:46:52.7156662Z (Reading database ... 60%
+2024-02-20T14:46:52.7156825Z (Reading database ... 65%
+2024-02-20T14:46:52.7156983Z (Reading database ... 70%
+2024-02-20T14:46:52.7157165Z (Reading database ... 75%
+2024-02-20T14:46:52.7157328Z (Reading database ... 80%
+2024-02-20T14:46:52.7157499Z (Reading database ... 85%
+2024-02-20T14:46:52.7157661Z (Reading database ... 90%
+2024-02-20T14:46:52.7157822Z (Reading database ... 95%
+2024-02-20T14:46:52.7157975Z (Reading database ... 100%
+2024-02-20T14:46:52.7158201Z (Reading database ... 61596 files and directories currently installed.)
+2024-02-20T14:46:52.7158575Z Preparing to unpack .../azure-cli_2.57.0-1~jammy_amd64.deb ...
+2024-02-20T14:46:52.7158860Z Unpacking azure-cli (2.57.0-1~jammy) ...
+2024-02-20T14:46:52.7159128Z Setting up azure-cli (2.57.0-1~jammy) ...
+2024-02-20T14:46:52.7159381Z Log ended: 2024-02-20  14:45:33
+2024-02-20T14:46:52.7159483Z 
+2024-02-20T14:46:52.7159832Z Log started: 2024-02-20  14:45:47
+2024-02-20T14:46:52.7160042Z Selecting previously unselected package unzip.
+2024-02-20T14:46:52.7160213Z (Reading database ... 
+2024-02-20T14:46:52.7160384Z (Reading database ... 5%
+2024-02-20T14:46:52.7160545Z (Reading database ... 10%
+2024-02-20T14:46:52.7160715Z (Reading database ... 15%
+2024-02-20T14:46:52.7160971Z (Reading database ... 20%
+2024-02-20T14:46:52.7161139Z (Reading database ... 25%
+2024-02-20T14:46:52.7161319Z (Reading database ... 30%
+2024-02-20T14:46:52.7161491Z (Reading database ... 35%
+2024-02-20T14:46:52.7161677Z (Reading database ... 40%
+2024-02-20T14:46:52.7161848Z (Reading database ... 45%
+2024-02-20T14:46:52.7162022Z (Reading database ... 50%
+2024-02-20T14:46:52.7162178Z (Reading database ... 55%
+2024-02-20T14:46:52.7162343Z (Reading database ... 60%
+2024-02-20T14:46:52.7167902Z (Reading database ... 65%
+2024-02-20T14:46:52.7168085Z (Reading database ... 70%
+2024-02-20T14:46:52.7168241Z (Reading database ... 75%
+2024-02-20T14:46:52.7168411Z (Reading database ... 80%
+2024-02-20T14:46:52.7168584Z (Reading database ... 85%
+2024-02-20T14:46:52.7168736Z (Reading database ... 90%
+2024-02-20T14:46:52.7168896Z (Reading database ... 95%
+2024-02-20T14:46:52.7169065Z (Reading database ... 100%
+2024-02-20T14:46:52.7169276Z (Reading database ... 96326 files and directories currently installed.)
+2024-02-20T14:46:52.7169684Z Preparing to unpack .../unzip_6.0-26ubuntu3.2_amd64.deb ...
+2024-02-20T14:46:52.7169957Z Unpacking unzip (6.0-26ubuntu3.2) ...
+2024-02-20T14:46:52.7170222Z Setting up unzip (6.0-26ubuntu3.2) ...
+2024-02-20T14:46:52.7170498Z Processing triggers for man-db (2.10.2-1) ...
+2024-02-20T14:46:52.7170793Z Log ended: 2024-02-20  14:45:48
+2024-02-20T14:46:52.7170883Z 
+2024-02-20T14:46:52.7171126Z Log started: 2024-02-20  14:46:10
+2024-02-20T14:46:52.7171333Z Selecting previously unselected package bzip2.
+2024-02-20T14:46:52.7171521Z (Reading database ... 
+2024-02-20T14:46:52.7171692Z (Reading database ... 5%
+2024-02-20T14:46:52.7171874Z (Reading database ... 10%
+2024-02-20T14:46:52.7172046Z (Reading database ... 15%
+2024-02-20T14:46:52.7172216Z (Reading database ... 20%
+2024-02-20T14:46:52.7172382Z (Reading database ... 25%
+2024-02-20T14:46:52.7172532Z (Reading database ... 30%
+2024-02-20T14:46:52.7172701Z (Reading database ... 35%
+2024-02-20T14:46:52.7172869Z (Reading database ... 40%
+2024-02-20T14:46:52.7173046Z (Reading database ... 45%
+2024-02-20T14:46:52.7173185Z (Reading database ... 50%
+2024-02-20T14:46:52.7173340Z (Reading database ... 55%
+2024-02-20T14:46:52.7173498Z (Reading database ... 60%
+2024-02-20T14:46:52.7173641Z (Reading database ... 65%
+2024-02-20T14:46:52.7173800Z (Reading database ... 70%
+2024-02-20T14:46:52.7173967Z (Reading database ... 75%
+2024-02-20T14:46:52.7174142Z (Reading database ... 80%
+2024-02-20T14:46:52.7174306Z (Reading database ... 85%
+2024-02-20T14:46:52.7174476Z (Reading database ... 90%
+2024-02-20T14:46:52.7174634Z (Reading database ... 95%
+2024-02-20T14:46:52.7174814Z (Reading database ... 100%
+2024-02-20T14:46:52.7175036Z (Reading database ... 96344 files and directories currently installed.)
+2024-02-20T14:46:52.7175393Z Preparing to unpack .../bzip2_1.0.8-5build1_amd64.deb ...
+2024-02-20T14:46:52.7175678Z Unpacking bzip2 (1.0.8-5build1) ...
+2024-02-20T14:46:52.7175977Z Selecting previously unselected package libdpkg-perl.
+2024-02-20T14:46:52.7176325Z Preparing to unpack .../libdpkg-perl_1.21.1ubuntu2.2_all.deb ...
+2024-02-20T14:46:52.7176620Z Unpacking libdpkg-perl (1.21.1ubuntu2.2) ...
+2024-02-20T14:46:52.7176933Z Selecting previously unselected package libfile-fnmatch-perl.
+2024-02-20T14:46:52.7177275Z Preparing to unpack .../libfile-fnmatch-perl_0.02-2build8_amd64.deb ...
+2024-02-20T14:46:52.7177571Z Unpacking libfile-fnmatch-perl (0.02-2build8) ...
+2024-02-20T14:46:52.7177782Z Selecting previously unselected package debsums.
+2024-02-20T14:46:52.7178010Z Preparing to unpack .../archives/debsums_3.0.2_all.deb ...
+2024-02-20T14:46:52.7178210Z Unpacking debsums (3.0.2) ...
+2024-02-20T14:46:52.7178625Z Selecting previously unselected package libfile-fcntllock-perl.
+2024-02-20T14:46:52.7178981Z Preparing to unpack .../libfile-fcntllock-perl_0.22-3build7_amd64.deb ...
+2024-02-20T14:46:52.7179291Z Unpacking libfile-fcntllock-perl (0.22-3build7) ...
+2024-02-20T14:46:52.7179572Z Setting up libfile-fcntllock-perl (0.22-3build7) ...
+2024-02-20T14:46:52.7179943Z Setting up bzip2 (1.0.8-5build1) ...
+2024-02-20T14:46:52.7180201Z Setting up libdpkg-perl (1.21.1ubuntu2.2) ...
+2024-02-20T14:46:52.7180482Z Setting up libfile-fnmatch-perl (0.02-2build8) ...
+2024-02-20T14:46:52.7180677Z Setting up debsums (3.0.2) ...
+2024-02-20T14:46:52.7180866Z debconf: unable to initialize frontend: Dialog
+2024-02-20T14:46:52.7181074Z debconf: (TERM is not set, so the dialog frontend is not usable.)
+2024-02-20T14:46:52.7181286Z debconf: falling back to frontend: Readline
+2024-02-20T14:46:52.7181581Z Processing triggers for man-db (2.10.2-1) ...
+2024-02-20T14:46:52.7181842Z Log ended: 2024-02-20  14:46:10
+2024-02-20T14:46:52.7181939Z 
+2024-02-20T14:46:52.7182161Z Log started: 2024-02-20  14:46:12
+2024-02-20T14:46:52.7182490Z Selecting previously unselected package liblttng-ust-common1:amd64.
+2024-02-20T14:46:52.7182690Z (Reading database ... 
+2024-02-20T14:46:52.7182871Z (Reading database ... 5%
+2024-02-20T14:46:52.7183027Z (Reading database ... 10%
+2024-02-20T14:46:52.7183211Z (Reading database ... 15%
+2024-02-20T14:46:52.7183380Z (Reading database ... 20%
+2024-02-20T14:46:52.7183535Z (Reading database ... 25%
+2024-02-20T14:46:52.7183694Z (Reading database ... 30%
+2024-02-20T14:46:52.7183858Z (Reading database ... 35%
+2024-02-20T14:46:52.7184024Z (Reading database ... 40%
+2024-02-20T14:46:52.7184189Z (Reading database ... 45%
+2024-02-20T14:46:52.7184369Z (Reading database ... 50%
+2024-02-20T14:46:52.7184531Z (Reading database ... 55%
+2024-02-20T14:46:52.7184701Z (Reading database ... 60%
+2024-02-20T14:46:52.7184879Z (Reading database ... 65%
+2024-02-20T14:46:52.7185046Z (Reading database ... 70%
+2024-02-20T14:46:52.7185219Z (Reading database ... 75%
+2024-02-20T14:46:52.7185378Z (Reading database ... 80%
+2024-02-20T14:46:52.7185530Z (Reading database ... 85%
+2024-02-20T14:46:52.7185696Z (Reading database ... 90%
+2024-02-20T14:46:52.7185876Z (Reading database ... 95%
+2024-02-20T14:46:52.7186017Z (Reading database ... 100%
+2024-02-20T14:46:52.7186600Z (Reading database ... 96567 files and directories currently installed.)
+2024-02-20T14:46:52.7187002Z Preparing to unpack .../liblttng-ust-common1_2.13.1-1ubuntu1_amd64.deb ...
+2024-02-20T14:46:52.7187374Z Unpacking liblttng-ust-common1:amd64 (2.13.1-1ubuntu1) ...
+2024-02-20T14:46:52.7187712Z Selecting previously unselected package liblttng-ust-ctl5:amd64.
+2024-02-20T14:46:52.7188100Z Preparing to unpack .../liblttng-ust-ctl5_2.13.1-1ubuntu1_amd64.deb ...
+2024-02-20T14:46:52.7188450Z Unpacking liblttng-ust-ctl5:amd64 (2.13.1-1ubuntu1) ...
+2024-02-20T14:46:52.7188795Z Selecting previously unselected package liblttng-ust1:amd64.
+2024-02-20T14:46:52.7189167Z Preparing to unpack .../liblttng-ust1_2.13.1-1ubuntu1_amd64.deb ...
+2024-02-20T14:46:52.7189544Z Unpacking liblttng-ust1:amd64 (2.13.1-1ubuntu1) ...
+2024-02-20T14:46:52.7190066Z Setting up liblttng-ust-common1:amd64 (2.13.1-1ubuntu1) ...
+2024-02-20T14:46:52.7193167Z Setting up liblttng-ust-ctl5:amd64 (2.13.1-1ubuntu1) ...
+2024-02-20T14:46:52.7193514Z Setting up liblttng-ust1:amd64 (2.13.1-1ubuntu1) ...
+2024-02-20T14:46:52.7193829Z Processing triggers for libc-bin (2.35-0ubuntu3.6) ...
+2024-02-20T14:46:52.7194102Z Log ended: 2024-02-20  14:46:15
+2024-02-20T14:46:52.7194379Z ===============
+2024-02-20T14:46:52.7194539Z Report ap2 logs
+2024-02-20T14:46:52.7194702Z ===============
+2024-02-20T14:46:52.7194868Z cat /var/log/apt/history.log
+2024-02-20T14:46:52.7194960Z 
+2024-02-20T14:46:52.7195190Z Start-Date: 2024-02-20  14:45:23
+2024-02-20T14:46:52.7195454Z Commandline: apt-get install -y azure-cli
+2024-02-20T14:46:52.7195731Z Install: azure-cli:amd64 (2.57.0-1~jammy)
+2024-02-20T14:46:52.7195969Z End-Date: 2024-02-20  14:45:33
+2024-02-20T14:46:52.7198848Z 
+2024-02-20T14:46:52.7199295Z Start-Date: 2024-02-20  14:45:47
+2024-02-20T14:46:52.7199502Z Commandline: apt-get install -y unzip
+2024-02-20T14:46:52.7199737Z Install: unzip:amd64 (6.0-26ubuntu3.2)
+2024-02-20T14:46:52.7199975Z End-Date: 2024-02-20  14:45:48
+2024-02-20T14:46:52.7200065Z 
+2024-02-20T14:46:52.7200283Z Start-Date: 2024-02-20  14:46:10
+2024-02-20T14:46:52.7200611Z Commandline: apt install -y libkrb5-3 zlib1g debsums
+2024-02-20T14:46:52.7201243Z Install: debsums:amd64 (3.0.2), bzip2:amd64 (1.0.8-5build1, automatic), libfile-fcntllock-perl:amd64 (0.22-3build7, automatic), libdpkg-perl:amd64 (1.21.1ubuntu2.2, automatic), libfile-fnmatch-perl:amd64 (0.02-2build8, automatic)
+2024-02-20T14:46:52.7201756Z End-Date: 2024-02-20  14:46:10
+2024-02-20T14:46:52.7201839Z 
+2024-02-20T14:46:52.7202070Z Start-Date: 2024-02-20  14:46:12
+2024-02-20T14:46:52.7202336Z Commandline: apt install -y liblttng-ust1
+2024-02-20T14:46:52.7202886Z Install: liblttng-ust-ctl5:amd64 (2.13.1-1ubuntu1, automatic), liblttng-ust1:amd64 (2.13.1-1ubuntu1), liblttng-ust-common1:amd64 (2.13.1-1ubuntu1, automatic)
+2024-02-20T14:46:52.7203285Z End-Date: 2024-02-20  14:46:15
+2024-02-20T14:46:52.7203368Z 
+2024-02-20T14:46:52.7300076Z ##[section]Finishing: Bash
