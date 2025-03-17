@@ -111,7 +111,7 @@ echo "AZURE_EXTENSION_DIR=/opt/az/azcliextensions" | sudo tee -a /etc/environmen
 az extension add -n azure-devops
 
 # install unzip
-sudo apt-get install -y unzip
+sudo apt-get install -y unzip git
 
 # Make sure az cli is installed. If it is not, it will throw an error which can be captured by the VMSS
 az version
